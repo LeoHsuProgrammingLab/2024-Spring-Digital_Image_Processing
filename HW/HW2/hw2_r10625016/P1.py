@@ -20,8 +20,8 @@ def sobel_alg(img, weight = 1):
         [-1, -2, -1]
     ], dtype=np.float32)
 
-    gradient_r = (convolve2d(img, kernel_r) * weight).astype(np.int32) 
-    gradient_c = (convolve2d(img, kernel_c) * weight).astype(np.int32) 
+    gradient_r = (convolve2d(img, kernel_r) * weight)
+    gradient_c = (convolve2d(img, kernel_c) * weight)
 
     magnitude = np.sqrt(gradient_r**2 + gradient_c**2)
     theta = np.arctan2(gradient_c, gradient_r) * 180 / np.pi
@@ -36,12 +36,17 @@ def convolve2d(img, kernel):
     kernel_h, kernel_w = kernel.shape
     pad_h, pad_w = kernel_h // 2, kernel_w // 2
     padded_img = np.pad(img, ((pad_h, pad_h), (pad_w, pad_w)), 'constant')
-    
-    output_img = np.zeros_like(img)
+
+    ''' 
+    remember: cv2.imread() is np.int8, so we have to convert it to np.float32 
+    if we want to do flexible calculation out of [0, 255] range
+    '''
+    output_img = np.zeros_like(img).astype(np.float32)
 
     for i in range(img_h):
         for j in range(img_w):
             tile = padded_img[i:i+kernel_h, j:j+kernel_w]
+            # print(tile*kernel, '\n')
             output_img[i, j] = np.sum(tile * kernel)
     
     return output_img
@@ -86,7 +91,7 @@ def non_max_suppression(magnitude, theta): # theta is the direction of gradient,
     
     return output_img
 
-def double_thresholding(img, higher_bound = 0.75, lower_bound = 0.45):
+def double_thresholding(img, higher_bound = 0.1, lower_bound = 0.05):
     img_h, img_w = img.shape
     output_img = np.zeros_like(img)
 
@@ -140,7 +145,8 @@ def enhanced_noise_reduction(img):
     return gaussian_filtered_img
 
 def noise_reduction(img):
-    gaussian_filtered_img = gaussian_filter(img, 7, 2) # sigma = 2, kernel size = 7
+    gaussian_filtered_img = gaussian_filter(img, 3, 1) # sigma = 1, kernel size = 3
+    # gaussian_filtered_img = gaussian_filter(img, 7, 2) # sigma = 2, kernel size = 7
 
     return gaussian_filtered_img
 
@@ -216,14 +222,20 @@ def hough_transform(img, threshold=100):
     # https://homepages.inf.ed.ac.uk/rbf/HIPR2/hough.htm
     img_h, img_w = img.shape
     max_rho = int(math.sqrt(img_h**2 + img_w**2))
-    accumulator = np.zeros((2*max_rho, 180), dtype=np.uint32)
+    accumulator = np.zeros((2*max_rho, 180))
 
     for i in range(img_h):
         for j in range(img_w):
             if img[i, j] == 255:
                 for theta in range(180):
-                    # rho = x * cos(theta) + y * sin(theta)
-                    rho = int(i * np.cos(np.deg2rad(theta)) + j * np.sin(np.deg2rad(theta)))
+                    '''
+                    rho = x * cos(theta) + y * sin(theta)
+                    rho ^ 2 = x^2 + y^2
+                    rho ^ 2  = x * (rho * cos(theta)) + y * (rho * sin(theta))
+                    rho ^ 2 = rho * (x * cos(theta) + y * sin(theta))
+                    rho = x * cos(theta) + y * sin(theta)
+                    '''
+                    rho = int(j * np.cos(np.deg2rad(theta)) + i * np.sin(np.deg2rad(theta)))
                     accumulator[rho, theta] += 1
 
     lines = []
@@ -250,24 +262,6 @@ def draw_lines(img, lines):
 
     cv2.imwrite('result7.png', img)
 
-def draw_lines_(img, lines):
-    img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-
-    for line in lines:
-        rho, theta = line[0]
-        a = np.cos(np.deg2rad(theta))
-        b = np.sin(np.deg2rad(theta))
-        x0 = a * rho
-        y0 = b * rho
-        x1 = int(x0 + 1000 * (-b))
-        x2 = int(x0 - 1000 * (-b))
-        y1 = int(y0 + 1000 * (a))
-        y2 = int(y0 - 1000 * (a))
-
-        cv2.line(img, (x1, y1), (x2, y2), (0, 255, 255), 2)
-    
-    cv2.imwrite('result7_2.png', img)
-
 def thresholding(img, threshold):
     img[img < threshold] = 0
     img[img >= threshold] = 255
@@ -287,7 +281,7 @@ def p1_a():
 
 def p1_b():
     img = cv2.imread('hw2_sample_images/sample1.png', cv2.IMREAD_GRAYSCALE)
-    canny_img = canny_alg(img, enhanced=True)
+    canny_img = canny_alg(img, enhanced=False)
     cv2.imwrite('result3.png', canny_img)
 
 def p1_c():
@@ -305,8 +299,6 @@ def p1_d():
 def p1_e():
     img_ = cv2.imread('result5.png', cv2.IMREAD_GRAYSCALE)
     img = img_.copy()
-    for i in range(5):
-        img = gaussian_filter(img, 5, 2) # sigma = 1, kernel size = 3
     canny_img = canny_alg(img)
     cv2.imwrite('result6.png', canny_img)
 
@@ -314,7 +306,7 @@ def p1_e():
     # cv2.imwrite('result6_2.png', canny_img_2)
     
     r6 = cv2.imread('result6.png', cv2.IMREAD_GRAYSCALE)
-    hough_lines = hough_transform(r6, 80) 
+    hough_lines = hough_transform(r6, 120) 
     draw_lines(r6, hough_lines)
 
     # hough_lines_ = cv2.HoughLines(r6, 1, np.pi/180, 100)
@@ -322,8 +314,8 @@ def p1_e():
     # cv2.imwrite('result7_2.png', r6)
 
 if __name__ == '__main__':
-    p1_a()
-    p1_b()
-    p1_c()
-    p1_d()
+    # p1_a()
+    # p1_b()
+    # p1_c()
+    # p1_d()
     p1_e()
