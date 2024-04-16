@@ -36,7 +36,7 @@ def laws_method(img):
     
     return feature_imgs, normalized_imgs
 
-def compute_energy(imgs, kernel_size=13):
+def compute_energy(imgs, kernel_size=19):
     pad_h, pad_w = kernel_size // 2, kernel_size // 2
     energy_imgs = []
 
@@ -58,12 +58,12 @@ def p2_a():
     img = cv2.imread('hw3_sample_images/sample2.png', cv2.IMREAD_GRAYSCALE)
     # feature extraction
     feature_imgs, normalized_imgs = laws_method(img)
-    for i, feat in enumerate(normalized_imgs):
-        cv2.imwrite(f'feature{i+1}.png', feat)
+    # for i, feat in enumerate(normalized_imgs):
+    #     cv2.imwrite(f'feature{i+1}.png', feat)
 
-    energy_imgs = compute_energy(normalized_imgs)
-    for i, energy in enumerate(energy_imgs):
-        cv2.imwrite(f'energy{i+1}.png', energy)
+    # energy_imgs = compute_energy(normalized_imgs)
+    # for i, energy in enumerate(energy_imgs):
+    #     cv2.imwrite(f'energy{i+1}.png', energy)
 
 # P2_b
 def euclidean_distance(x1, x2):
@@ -93,7 +93,9 @@ def p2_b():
     
     feature_imgs, normalized_imgs = laws_method(img)
     energy_imgs = compute_energy(normalized_imgs)
-    kmeans_input = np.stack(energy_imgs, axis=-1).reshape(-1, len(energy_imgs))
+    x_coord, y_coord = np.meshgrid(np.arange(img.shape[1]), np.arange(img.shape[0]))
+    added_imgs = feature_imgs + energy_imgs + y_coord
+    kmeans_input = np.stack(added_imgs, axis=-1).reshape(-1, len(added_imgs))
     k = 4
     clusters, centroids = kmeans(kmeans_input, k=k, max_iters=5)
     labeled_img = clusters.reshape(img.shape)
@@ -126,7 +128,7 @@ def gen_checkboard_texture(h, w, tile_size=32):
                     checkboard[i, j] = 255
     return checkboard
 
-def gen_sinusoidal_texture(h, w, freq=0.1):
+def gen_sinusoidal_texture(h, w, freq=0.5):
     sinusoidal = np.zeros((h, w))
     for i in range(h):
         for j in range(w):
@@ -167,7 +169,7 @@ def p2_c():
 
     textures = [checkboard, sinusoidal, noise, rain]
     result_img = np.zeros((img.shape[0], img.shape[1], 3))
-    k = 3
+    k = 4
     for i in range(k):
         texture = textures[i]
         mask = masks[i]
@@ -218,7 +220,6 @@ def find_minimum_cost_seam(block1, block2, vertical: bool):
 
 def blend_blocks(block1, block2, seam, overlap, vertical: bool):
     h, w = block1.shape
-    print(seam)
     result = np.zeros_like(block1) # result block: already expanded
     if vertical: # blend horizontally to left: seam is vertical
         for i in range(h):
@@ -280,7 +281,7 @@ def p2_d():
     cv2.imwrite('result6.png', quilted_img)
 
 if __name__ == "__main__":
-    # p2_a()
-    # p2_b()
-    # p2_c()
+    p2_a()
+    p2_b()
+    p2_c()
     p2_d()

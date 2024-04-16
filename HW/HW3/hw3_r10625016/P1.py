@@ -20,6 +20,7 @@ def erode(img, kernel):
 
 def morphological_boundary(img):
     kernel = np.ones((3,3))
+    # kernel = np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]])
     erosion = erode(img, kernel)
     boundary = img - erosion
     return boundary
@@ -67,7 +68,7 @@ def p1_b():
     img = cv2.imread('hw3_sample_images/sample1.png', cv2.IMREAD_GRAYSCALE)
     # hole filling
     kernel = np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]])
-    result = hole_filling(img, kernel)
+    result = hole_filling(img, kernel, iterations=7)
     cv2.imwrite('result2.png', result)
 
 def opening_noise_removal(img):
@@ -91,9 +92,15 @@ def p1_c():
     cleaned_img = opening_noise_removal(img)
     cv2.imwrite('result3.png', cleaned_img)
 
-    # noise removal using median filter
-    median_img = filters.median_filter(img)
-    cv2.imwrite('result3_1.png', median_img)
+    # close_img = closing_noise_removal(img)
+    # cv2.imwrite('result3_2.png', close_img)
+
+    # pepper_removal = filters.no_pepper_filter(img)
+    # cv2.imwrite('result3_3.png', pepper_removal)
+
+    # # noise removal using median filter
+    # median_img = filters.median_filter(img)
+    # cv2.imwrite('result3_1.png', median_img)
 
 def connected_component_labeling(img, iterations=7):
     # https://homepages.inf.ed.ac.uk/rbf/HIPR2/label.htm
@@ -157,20 +164,22 @@ def p1_d():
     img = cv2.imread('hw3_sample_images/sample1.png', cv2.IMREAD_GRAYSCALE)
     # noise removal using morphological operations
     cleaned_img = opening_noise_removal(img)
+
     # cleaned_img = erode(cleaned_img, np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]]))
-    cleaned_img = hole_filling(cleaned_img, np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]]))
+    cleaned_img = hole_filling(cleaned_img, np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]]), iterations=1)
     
     # connected component labeling
     labeled_img = connected_component_labeling(cleaned_img)
+
     unique_labels = np.unique(labeled_img)
     print(unique_labels)
     print('Number of connected components:', len(unique_labels) - 1)
     labeled_img = draw_different_labels(img, labeled_img)
 
-    cv2.imwrite('result_3d.png', labeled_img)
+    # cv2.imwrite('result_3d.png', labeled_img)
     
 if __name__ == "__main__":
-    # p1_a()
-    # p1_b()
-    # p1_c()
+    p1_a()
+    p1_b()
+    p1_c()
     p1_d()
