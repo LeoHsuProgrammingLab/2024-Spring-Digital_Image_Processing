@@ -164,7 +164,7 @@ def canny_alg(img, enhanced = False):
 
 def lapacian_of_gaussian_alg(img, weight = 1/4):
     gaussian_filtered_img = gaussian_filter(img, 3, 1) # sigma = 1, kernel size = 3     
-    laplacian_kernel = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]], dtype=np.int32)
+    laplacian_kernel = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]], dtype=np.int32) # 4-connectivity
 
     lapacian_img = convolve2d(gaussian_filtered_img, laplacian_kernel) # have to binarize
     lapacian_img = lapacian_img * weight
